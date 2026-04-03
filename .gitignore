@@ -51,3 +51,6 @@ Thumbs.db
 .replitignore
 replit.md
 attached_assets/
+.replit-artifact/
+*/.replit-artifact/
+artifacts/mockup-sandbox/
