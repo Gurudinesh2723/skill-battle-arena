@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Skill Battle Arena"
+version = "1.0.0"
+id = "artifacts/skill-battle-arena"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24102
+
+[services.development]
+run = "pnpm --filter @workspace/skill-battle-arena run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/skill-battle-arena", "run", "build" ]
+publicDir = "artifacts/skill-battle-arena/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24102"
+BASE_PATH = "/"

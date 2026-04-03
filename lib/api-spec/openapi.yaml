@@ -3,13 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Skill Battle Arena API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Auth operations
+  - name: users
+    description: User operations
+  - name: questions
+    description: Question operations
+  - name: matches
+    description: Match operations
+  - name: leaderboard
+    description: Leaderboard operations
 paths:
   /healthz:
     get:
@@ -24,6 +34,326 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: registerUser
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterBody"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Username/email already taken
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: loginUser
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logoutUser
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/{id}:
+    get:
+      operationId: getUserById
+      tags: [users]
+      summary: Get user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/{id}/stats:
+    get:
+      operationId: getUserStats
+      tags: [users]
+      summary: Get user game stats
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStats"
+
+  /questions:
+    get:
+      operationId: listQuestions
+      tags: [questions]
+      summary: Get a batch of random questions
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Question"
+
+  /questions/categories:
+    get:
+      operationId: listCategories
+      tags: [questions]
+      summary: Get all available question categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+
+  /matches:
+    get:
+      operationId: listMatches
+      tags: [matches]
+      summary: List recent matches for current user
+      responses:
+        "200":
+          description: List of recent matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MatchSummary"
+    post:
+      operationId: createMatch
+      tags: [matches]
+      summary: Create a new single-player match
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMatchBody"
+      responses:
+        "201":
+          description: Match created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Match"
+
+  /matches/{id}:
+    get:
+      operationId: getMatch
+      tags: [matches]
+      summary: Get match details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Match details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Match"
+        "404":
+          description: Match not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /matches/{id}/submit:
+    post:
+      operationId: submitAnswer
+      tags: [matches]
+      summary: Submit an answer for a question in a match
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitAnswerBody"
+      responses:
+        "200":
+          description: Answer result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnswerResult"
+
+  /matches/{id}/finish:
+    post:
+      operationId: finishMatch
+      tags: [matches]
+      summary: Finish a match and record the final score
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FinishMatchBody"
+      responses:
+        "200":
+          description: Match finished with final score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchResult"
+
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: Get top players on the global leaderboard
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Leaderboard entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+  /leaderboard/summary:
+    get:
+      operationId: getLeaderboardSummary
+      tags: [leaderboard]
+      summary: Get summary stats for leaderboard (total players, top score, avg)
+      responses:
+        "200":
+          description: Leaderboard summary stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardSummary"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +364,369 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    RegisterBody:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - email
+        - password
+
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+      required:
+        - user
+        - token
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        totalScore:
+          type: integer
+        skillRating:
+          type: integer
+        coins:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - username
+        - email
+        - totalScore
+        - skillRating
+        - coins
+        - createdAt
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        totalScore:
+          type: integer
+        skillRating:
+          type: integer
+        coins:
+          type: integer
+        matchesPlayed:
+          type: integer
+        wins:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - username
+        - totalScore
+        - skillRating
+        - coins
+        - matchesPlayed
+        - wins
+        - createdAt
+
+    UserStats:
+      type: object
+      properties:
+        userId:
+          type: integer
+        totalMatches:
+          type: integer
+        wins:
+          type: integer
+        losses:
+          type: integer
+        avgScore:
+          type: number
+        bestScore:
+          type: integer
+        totalQuestionsAnswered:
+          type: integer
+        correctAnswers:
+          type: integer
+        accuracyPercent:
+          type: number
+        favoriteCategory:
+          type: ["string", "null"]
+      required:
+        - userId
+        - totalMatches
+        - wins
+        - losses
+        - avgScore
+        - bestScore
+        - totalQuestionsAnswered
+        - correctAnswers
+        - accuracyPercent
+
+    Question:
+      type: object
+      properties:
+        id:
+          type: integer
+        text:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        category:
+          type: string
+        difficulty:
+          type: string
+        timeLimit:
+          type: integer
+      required:
+        - id
+        - text
+        - options
+        - category
+        - difficulty
+        - timeLimit
+
+    Category:
+      type: object
+      properties:
+        name:
+          type: string
+        questionCount:
+          type: integer
+        icon:
+          type: string
+      required:
+        - name
+        - questionCount
+        - icon
+
+    CreateMatchBody:
+      type: object
+      properties:
+        category:
+          type: ["string", "null"]
+        questionCount:
+          type: integer
+      required:
+        - questionCount
+
+    Match:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        category:
+          type: ["string", "null"]
+        status:
+          type: string
+        currentQuestionIndex:
+          type: integer
+        score:
+          type: integer
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Question"
+        createdAt:
+          type: string
+      required:
+        - id
+        - userId
+        - status
+        - currentQuestionIndex
+        - score
+        - questions
+        - createdAt
+
+    MatchSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        category:
+          type: ["string", "null"]
+        status:
+          type: string
+        score:
+          type: integer
+        totalQuestions:
+          type: integer
+        correctAnswers:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - status
+        - score
+        - totalQuestions
+        - correctAnswers
+        - createdAt
+
+    SubmitAnswerBody:
+      type: object
+      properties:
+        questionId:
+          type: integer
+        selectedOption:
+          type: integer
+        timeSpent:
+          type: integer
+      required:
+        - questionId
+        - selectedOption
+        - timeSpent
+
+    AnswerResult:
+      type: object
+      properties:
+        correct:
+          type: boolean
+        correctOption:
+          type: integer
+        pointsEarned:
+          type: integer
+        explanation:
+          type: ["string", "null"]
+      required:
+        - correct
+        - correctOption
+        - pointsEarned
+
+    FinishMatchBody:
+      type: object
+      properties:
+        score:
+          type: integer
+        correctAnswers:
+          type: integer
+        totalQuestions:
+          type: integer
+      required:
+        - score
+        - correctAnswers
+        - totalQuestions
+
+    MatchResult:
+      type: object
+      properties:
+        matchId:
+          type: integer
+        finalScore:
+          type: integer
+        correctAnswers:
+          type: integer
+        totalQuestions:
+          type: integer
+        coinsEarned:
+          type: integer
+        ratingChange:
+          type: integer
+        newTotalScore:
+          type: integer
+        newSkillRating:
+          type: integer
+      required:
+        - matchId
+        - finalScore
+        - correctAnswers
+        - totalQuestions
+        - coinsEarned
+        - ratingChange
+        - newTotalScore
+        - newSkillRating
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        userId:
+          type: integer
+        username:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        totalScore:
+          type: integer
+        skillRating:
+          type: integer
+        wins:
+          type: integer
+        matchesPlayed:
+          type: integer
+      required:
+        - rank
+        - userId
+        - username
+        - totalScore
+        - skillRating
+        - wins
+        - matchesPlayed
+
+    LeaderboardSummary:
+      type: object
+      properties:
+        totalPlayers:
+          type: integer
+        topScore:
+          type: integer
+        avgScore:
+          type: number
+        totalMatchesPlayed:
+          type: integer
+      required:
+        - totalPlayers
+        - topScore
+        - avgScore
+        - totalMatchesPlayed
